@@ -301,4 +301,26 @@ mod tests {
         actual.expand_once(&stencil);
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn flood() {
+        #[rustfmt::skip]
+        let mask = Mask::new([
+            0b01000,
+            0b11100,
+            0b01010,
+            0b00111,
+            0b00010,
+        ]);
+        let a_group = mask.flood(3, 0);
+
+        #[rustfmt::skip]
+        let expected = Mask::new([
+            0b01000,
+            0b11100,
+            0b01000,
+        ]);
+
+        assert_eq!(a_group, expected);
+    }
 }
