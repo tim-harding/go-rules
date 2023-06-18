@@ -10,6 +10,9 @@ use std::{
 pub struct MaskRow(u32);
 
 impl MaskRow {
+    pub const EMPTY: Self = Self(0);
+    pub const FILLED: Self = Self(0b1111111111111111111);
+
     pub fn new() -> Self {
         Self::default()
     }
@@ -27,6 +30,10 @@ impl MaskRow {
     pub fn unset(&mut self, i: usize) {
         assert!(i <= 18);
         self.0 &= !(1 << i);
+    }
+
+    pub fn expand(self) -> Self {
+        self << 1 | self | self >> 1
     }
 }
 

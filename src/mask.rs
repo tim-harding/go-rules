@@ -9,6 +9,9 @@ use crate::mask_row::MaskRow;
 pub struct Mask([MaskRow; 19]);
 
 impl Mask {
+    pub const EMPTY: Self = Self([MaskRow::EMPTY; 19]);
+    pub const FILLED: Self = Self([MaskRow::FILLED; 19]);
+
     pub fn new() -> Self {
         Self::default()
     }
@@ -33,11 +36,11 @@ impl Mask {
 
     pub fn expand(&self, stencil: &Mask) -> Self {
         let mut out = Mask::new();
-        out[0] |= self[1] | self[0] << 1 | self[0] >> 1 & stencil[0];
+        out[0] |= self[1] | self[0].expand() & stencil[0];
         for i in 1..=17 {
-            out[i] |= self[i - 1] | self[i] << 1 | self[i] >> 1 | self[i + 1] & stencil[i];
+            out[i] |= self[i - 1] | self[i].expand() | self[i + 1] & stencil[i];
         }
-        out[18] |= self[17] | self[18] << 1 | self[18] >> 1 & stencil[18];
+        out[18] |= self[17] | self[18].expand() & stencil[18];
         out
     }
 
@@ -120,5 +123,21 @@ mod tests {
             0000000000000000000\n\
             0000000000000000000\n";
         assert_eq!(format!("{mask:?}"), expected);
+    }
+
+    #[test]
+    fn expands_single_stone() {
+        let mut actual = Mask::new();
+        actual.set(10, 10);
+        actual = actual.expand(&Mask::FILLED);
+
+        let mut expected = Mask::new();
+        expected.set(10, 10);
+        expected.set(9, 10);
+        expected.set(11, 10);
+        expected.set(10, 9);
+        expected.set(10, 11);
+
+        assert_eq!(actual, expected);
     }
 }
