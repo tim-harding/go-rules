@@ -1,12 +1,12 @@
 use std::{
-    fmt::Debug,
+    fmt::{self, Debug, Formatter},
     ops::{
         BitAnd, BitAndAssign, BitOr, BitOrAssign, Deref, DerefMut, Index, IndexMut, Not, Shl,
         ShlAssign, Shr, ShrAssign,
     },
 };
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Mask([MaskRow; 19]);
 
 impl Mask {
@@ -79,14 +79,19 @@ impl IndexMut<usize> for Mask {
     }
 }
 
+impl Debug for Mask {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for row in self.rows() {
+            write!(f, "{:019b}\n", row.0)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MaskRow(u32);
 
 impl MaskRow {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     fn get(&self, i: usize) -> bool {
         assert!(i <= 18);
         self.0 >> i & 1 == 1
