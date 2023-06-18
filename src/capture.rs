@@ -36,3 +36,39 @@ impl<'a> Capture<'a> {
         is_capture
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mask::Mask;
+
+    #[test]
+    fn captures_one_stone() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b010,
+            0b101,
+            0b010,
+        ]);
+
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b000,
+            0b010,
+            0b000,
+        ]);
+
+        let mut state = State::new(black, white);
+        let mut capture = Capture::new(&mut state, Color::Black);
+        assert!(capture.try_capture(1, 1));
+
+        #[rustfmt::skip]
+        let expected_black = Mask::new([
+            0b010,
+            0b101,
+            0b010,
+        ]);
+        assert_eq!(state.black, expected_black);
+        assert_eq!(state.white, Mask::EMPTY);
+    }
+}
