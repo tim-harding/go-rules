@@ -61,14 +61,34 @@ mod tests {
         let mut state = State::new(black, white);
         let mut capture = Capture::new(&mut state, Color::Black);
         assert!(capture.try_capture(1, 1));
+        assert_eq!(state.black, black);
+        assert_eq!(state.white, Mask::EMPTY);
+    }
+
+    #[test]
+    fn captures_dumpling() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b01110,
+            0b10001,
+            0b10001,
+            0b10001,
+            0b01110,
+        ]);
 
         #[rustfmt::skip]
-        let expected_black = Mask::new([
-            0b010,
-            0b101,
-            0b010,
+        let white = Mask::new([
+            0b00000,
+            0b01110,
+            0b01110,
+            0b01110,
+            0b00000,
         ]);
-        assert_eq!(state.black, expected_black);
+
+        let mut state = State::new(black, white);
+        let mut capture = Capture::new(&mut state, Color::Black);
+        assert!(capture.try_capture(1, 1));
+        assert_eq!(state.black, black);
         assert_eq!(state.white, Mask::EMPTY);
     }
 }
