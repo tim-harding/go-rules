@@ -13,8 +13,12 @@ impl MaskRow {
     pub const EMPTY: Self = Self(0);
     pub const FILLED: Self = Self(0b1111111111111111111);
 
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(value: u32) -> Self {
+        assert!(
+            &value < &Self::FILLED,
+            "Cannot have a row with more than 19 stones"
+        );
+        Self(value)
     }
 
     pub fn get(&self, i: usize) -> bool {
@@ -117,11 +121,7 @@ impl Not for MaskRow {
 
 impl Debug for MaskRow {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for i in 0..19 {
-            let c = if self.get(i) { '1' } else { '0' };
-            write!(f, "{c}")?;
-        }
-        Ok(())
+        write!(f, "{:019b}", self.0)
     }
 }
 
@@ -131,10 +131,10 @@ mod tests {
 
     #[test]
     fn debug_format() {
-        let mut row = MaskRow::new();
+        let mut row = MaskRow::EMPTY;
         row.set(10);
         row.set(3);
         row.set(13);
-        assert_eq!(format!("{row:?}"), "0001000000100100000")
+        assert_eq!(format!("{row:?}"), "0000010010000001000")
     }
 }

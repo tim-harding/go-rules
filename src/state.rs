@@ -41,7 +41,7 @@ impl State {
     }
 
     pub fn mask_group(&self, x: usize, y: usize, color: Color) -> Mask {
-        let mut mask = Mask::new();
+        let mut mask = Mask::EMPTY;
         let stencil = match color {
             Color::Black => &self.black,
             Color::White => &self.white,
