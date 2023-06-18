@@ -183,4 +183,25 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn expands_curvy_shape() {
+        #[rustfmt::skip]
+        let mut actual = Mask::new([
+            0b00000,
+            0b01110,
+            0b01010,
+        ]);
+        actual = actual.expand(&Mask::FILLED);
+
+        #[rustfmt::skip]
+        let mut expected = Mask::new([
+            0b01110,
+            0b11111,
+            0b11111,
+            0b01010,
+        ]);
+
+        assert_eq!(actual, expected);
+    }
 }
