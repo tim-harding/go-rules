@@ -44,11 +44,11 @@ impl Mask {
 
     pub fn expand(&self, stencil: &Mask) -> Self {
         let mut out = Mask::EMPTY;
-        out[0] |= self[1] | self[0].expand() & stencil[0];
+        out[0] = (self[1] | self[0].expand()) & stencil[0];
         for i in 1..=17 {
-            out[i] |= self[i - 1] | self[i].expand() | self[i + 1] & stencil[i];
+            out[i] = (self[i - 1] | self[i].expand() | self[i + 1]) & stencil[i];
         }
-        out[18] |= self[17] | self[18].expand() & stencil[18];
+        out[18] = (self[17] | self[18].expand()) & stencil[18];
         out
     }
 
@@ -202,6 +202,45 @@ mod tests {
             0b01010,
         ]);
 
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn keeps_stencil() {
+        #[rustfmt::skip]
+        let mut actual = Mask::new([
+            0b00000,
+            0b01000,
+            0b00000,
+            0b00000,
+        ]);
+
+        #[rustfmt::skip]
+        let mut stencil = Mask::new([
+            0b00000,
+            0b01110,
+            0b01110,
+            0b01110,
+        ]);
+
+        #[rustfmt::skip]
+        let mut expected = Mask::new([
+            0b00000,
+            0b01100,
+            0b01000,
+            0b00000,
+        ]);
+        actual = actual.expand(&stencil);
+        assert_eq!(actual, expected);
+
+        #[rustfmt::skip]
+        let mut expected = Mask::new([
+            0b00000,
+            0b01110,
+            0b01100,
+            0b01000,
+        ]);
+        actual = actual.expand(&stencil);
         assert_eq!(actual, expected);
     }
 }
