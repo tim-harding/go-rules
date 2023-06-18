@@ -9,8 +9,8 @@ pub struct State {
 }
 
 impl State {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(black: Mask, white: Mask) -> Self {
+        Self { black, white }
     }
 
     pub fn set(&mut self, x: usize, y: usize, color: Option<Color>) {
@@ -85,5 +85,35 @@ impl Debug for State {
             write!(f, "\n")?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn removes_group() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b01000010,
+            0b11100111,
+            0b01010010,
+            0b00111000,
+            0b00010000,
+        ]);
+        let mut state = State::new(black, Mask::EMPTY);
+        state.remove_group(6, 0);
+
+        #[rustfmt::skip]
+        let expected = Mask::new([
+            0b00000010,
+            0b00000111,
+            0b00010010,
+            0b00111000,
+            0b00010000,
+        ]);
+
+        assert_eq!(state.black, expected);
     }
 }

@@ -38,7 +38,7 @@ pub struct Tree {
 impl Tree {
     pub fn empty() -> Self {
         Self {
-            states: vec![Node::new(State::new(), usize::MAX)],
+            states: vec![Node::new(State::default(), usize::MAX)],
             current: 0,
             to_play: Color::Black,
             placement_mode: PlacementMode::Toggle,
