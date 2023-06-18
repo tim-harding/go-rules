@@ -1,5 +1,5 @@
 [workspace]
-
 members = [
-	"rules"
+    "rules"
 ]
+resolver = "2"
