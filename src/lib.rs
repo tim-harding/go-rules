@@ -1,5 +1,6 @@
 mod color;
 mod mask;
+mod mask_row;
 mod state;
 
 use color::Color;

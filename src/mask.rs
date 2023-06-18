@@ -1,10 +1,9 @@
 use std::{
     fmt::{self, Debug, Formatter},
-    ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, Deref, DerefMut, Index, IndexMut, Not, Shl,
-        ShlAssign, Shr, ShrAssign,
-    },
+    ops::{Deref, DerefMut, Index, IndexMut},
 };
+
+use crate::mask_row::MaskRow;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Mask([MaskRow; 19]);
@@ -17,19 +16,19 @@ impl Mask {
     pub fn get(&self, x: usize, y: usize) -> bool {
         assert!(x <= 18);
         assert!(y <= 18);
-        self.0[y].get(x)
+        self[y].get(x)
     }
 
     pub fn set(&mut self, x: usize, y: usize) {
         assert!(x <= 18);
         assert!(y <= 18);
-        self.0[y].set(x);
+        self[y].set(x);
     }
 
     pub fn unset(&mut self, x: usize, y: usize) {
         assert!(x <= 18);
         assert!(y <= 18);
-        self.0[y].unset(x)
+        self[y].unset(x)
     }
 
     pub fn expand(&self, stencil: &Mask) -> Self {
@@ -82,106 +81,16 @@ impl IndexMut<usize> for Mask {
 impl Debug for Mask {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for row in self.rows() {
-            write!(f, "{:019b}\n", row.0)?;
+            write!(f, "{:?}\n", row)?;
         }
         Ok(())
     }
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct MaskRow(u32);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl MaskRow {
-    fn get(&self, i: usize) -> bool {
-        assert!(i <= 18);
-        self.0 >> i & 1 == 1
-    }
-
-    fn set(&mut self, i: usize) {
-        assert!(i <= 18);
-        self.0 |= 1 << i;
-    }
-
-    fn unset(&mut self, i: usize) {
-        assert!(i <= 18);
-        self.0 &= !(1 << i);
-    }
-}
-
-impl Deref for MaskRow {
-    type Target = u32;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for MaskRow {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl BitAnd for MaskRow {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        Self(self.0 & rhs.0)
-    }
-}
-
-impl BitAndAssign for MaskRow {
-    fn bitand_assign(&mut self, rhs: Self) {
-        self.0 &= rhs.0;
-    }
-}
-
-impl BitOr for MaskRow {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        Self(self.0 | rhs.0)
-    }
-}
-
-impl BitOrAssign for MaskRow {
-    fn bitor_assign(&mut self, rhs: Self) {
-        self.0 |= rhs.0
-    }
-}
-
-impl Shl<usize> for MaskRow {
-    type Output = Self;
-
-    fn shl(self, rhs: usize) -> Self::Output {
-        Self(self.0 << rhs)
-    }
-}
-
-impl ShlAssign for MaskRow {
-    fn shl_assign(&mut self, rhs: Self) {
-        self.0 <<= rhs.0
-    }
-}
-
-impl Shr<usize> for MaskRow {
-    type Output = Self;
-
-    fn shr(self, rhs: usize) -> Self::Output {
-        Self(self.0 >> rhs)
-    }
-}
-
-impl ShrAssign for MaskRow {
-    fn shr_assign(&mut self, rhs: Self) {
-        self.0 >>= rhs.0
-    }
-}
-
-impl Not for MaskRow {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        Self(!self.0)
-    }
+    #[test]
+    fn displays_in_debug_mode() {}
 }
