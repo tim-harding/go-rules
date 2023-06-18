@@ -125,14 +125,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn already_exists_error() {
+    fn already_exists() {
         let state = State::new(Mask::new([0b1]), Mask::EMPTY);
         let mut tree = Tree::new(state, Color::White);
         assert_eq!(tree.place_stone(0, 0), Err(PlaceStoneError::AlreadyExists));
     }
 
     #[test]
-    fn self_capture_error() {
+    fn self_capture() {
         #[rustfmt::skip]
         let white = Mask::new([
             0b010,
@@ -142,5 +142,43 @@ mod tests {
         let state = State::new(Mask::EMPTY, white);
         let mut tree = Tree::new(state, Color::Black);
         assert_eq!(tree.place_stone(1, 1), Err(PlaceStoneError::SelfCapture));
+    }
+
+    #[test]
+    fn ko() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b0010,
+            0b0101,
+            0b0010,
+        ]);
+
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b0100,
+            0b1000,
+            0b0100,
+        ]);
+
+        #[rustfmt::skip]
+        let expected_black = Mask::new([
+            0b0010,
+            0b0001,
+            0b0010,
+        ]);
+
+        #[rustfmt::skip]
+        let expected_white = Mask::new([
+            0b0100,
+            0b1010,
+            0b0100,
+        ]);
+
+        let expected = State::new(expected_black, expected_white);
+        let state = State::new(black, white);
+        let mut tree = Tree::new(state, Color::White);
+        assert_eq!(tree.place_stone(1, 1), Ok(()));
+        assert_eq!(tree.current(), &expected);
+        assert_eq!(tree.place_stone(2, 1), Err(PlaceStoneError::Ko));
     }
 }
