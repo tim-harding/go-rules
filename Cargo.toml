@@ -1,7 +1,5 @@
-[package]
-name = "go-rules"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-[dependencies]
-thiserror = "1.0.40"
+members = [
+	"rules"
+]
