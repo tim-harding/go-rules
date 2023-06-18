@@ -77,11 +77,11 @@ impl Tree {
         is_capture |= y < 18 && capture.try_capture(x, y + 1);
 
         if !is_capture {
-            let defender = self.to_play.opposite();
-            let left = x == 0 || state.get(x - 1, y) == Some(defender);
-            let right = x == 18 || state.get(x + 1, y) == Some(defender);
-            let down = y == 0 || state.get(x, y - 1) == Some(defender);
-            let up = y == 18 || state.get(x, y + 1) == Some(defender);
+            let defender = Some(self.to_play.opposite());
+            let left = x == 0 || state.get(x - 1, y) == defender;
+            let right = x == 18 || state.get(x + 1, y) == defender;
+            let down = y == 0 || state.get(x, y - 1) == defender;
+            let up = y == 18 || state.get(x, y + 1) == defender;
             let is_self_capture = left && right && down && up;
             if is_self_capture {
                 return Err(PlaceStoneError::SelfCapture);
@@ -161,24 +161,63 @@ mod tests {
         ]);
 
         #[rustfmt::skip]
-        let expected_black = Mask::new([
+        let black_expected = Mask::new([
             0b0010,
             0b0001,
             0b0010,
         ]);
 
         #[rustfmt::skip]
-        let expected_white = Mask::new([
+        let white_expected = Mask::new([
             0b0100,
             0b1010,
             0b0100,
         ]);
 
-        let expected = State::new(expected_black, expected_white);
+        let expected = State::new(black_expected, white_expected);
         let state = State::new(black, white);
         let mut tree = Tree::new(state, Color::White);
         assert_eq!(tree.place_stone(1, 1), Ok(()));
         assert_eq!(tree.current(), &expected);
         assert_eq!(tree.place_stone(2, 1), Err(PlaceStoneError::Ko));
+    }
+
+    #[test]
+    fn capture_multiple() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b111111111,
+            0b100000001,
+            0b111101111,
+        ]);
+
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b000000000,
+            0b011101110,
+            0b000010000,
+            0b000010000,
+        ]);
+
+        #[rustfmt::skip]
+        let black_expected = Mask::new([
+            0b111111111,
+            0b100010001,
+            0b111101111,
+        ]);
+
+        #[rustfmt::skip]
+        let white_expected = Mask::new([
+            0b000000000,
+            0b000000000,
+            0b000010000,
+            0b000010000,
+        ]);
+
+        let state = State::new(black, white);
+        let expected = State::new(black_expected, white_expected);
+        let mut tree = Tree::new(state, Color::Black);
+        assert_eq!(tree.place_stone(4, 1), Ok(()));
+        assert_eq!(tree.current(), &expected);
     }
 }
