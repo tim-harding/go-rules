@@ -220,4 +220,47 @@ mod tests {
         assert_eq!(tree.place_stone(4, 1), Ok(()));
         assert_eq!(tree.current(), &expected);
     }
+
+    #[test]
+    fn edge_capture() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b1000,
+            0b0100,
+        ]);
+        let white = Mask::new([0b0100]);
+
+        #[rustfmt::skip]
+        let black_expected = Mask::new([
+            0b1010,
+            0b0100,
+        ]);
+
+        let expected = State::new(black_expected, Mask::EMPTY);
+        let state = State::new(black, white);
+        let mut tree = Tree::new(state, Color::Black);
+        assert_eq!(tree.place_stone(1, 0), Ok(()));
+        assert_eq!(tree.current(), &expected);
+    }
+
+    #[test]
+    fn corner_capture() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b10,
+        ]);
+        let white = Mask::new([0b1]);
+
+        #[rustfmt::skip]
+        let black_expected = Mask::new([
+            0b10,
+            0b01,
+        ]);
+
+        let expected = State::new(black_expected, Mask::EMPTY);
+        let state = State::new(black, white);
+        let mut tree = Tree::new(state, Color::Black);
+        assert_eq!(tree.place_stone(0, 1), Ok(()));
+        assert_eq!(tree.current(), &expected);
+    }
 }
