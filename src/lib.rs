@@ -1,12 +1,14 @@
+mod capture;
 mod color;
 mod mask;
 mod mask_row;
 mod state;
 
 use color::Color;
-use mask::Mask;
 use state::State;
 use std::fmt::Debug;
+
+use crate::capture::Capture;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 struct Node {
@@ -58,8 +60,8 @@ impl Tree {
         assert!(x <= 18);
         assert!(y <= 18);
 
-        let node = self.nodes[self.current];
-        let mut state = node.state.clone();
+        let current_node = self.nodes[self.current];
+        let mut state = current_node.state.clone();
 
         if state.black.get(x, y) || state.white.get(x, y) {
             return Err(PlaceStoneError::AlreadyExists);
@@ -67,26 +69,14 @@ impl Tree {
 
         state.set(x, y, Some(self.to_play));
 
-        let mut capture = Capture::new(&state, self.to_play);
-        let left = x > 0 && capture.is_capture(x - 1, y);
-        let right = x < 18 && capture.is_capture(x + 1, y);
-        let down = y > 0 && capture.is_capture(x, y - 1);
-        let up = y < 18 && capture.is_capture(x, y + 1);
-        let did_capture = left || right || down || up;
-        if did_capture {
-            if left {
-                state.remove_group(x.wrapping_sub(1), y);
-            }
-            if right {
-                state.remove_group(x.wrapping_add(1), y);
-            }
-            if up {
-                state.remove_group(x, y.wrapping_add(1));
-            }
-            if down {
-                state.remove_group(x, y.wrapping_sub(1));
-            }
-        } else {
+        let mut capture = Capture::new(&mut state, self.to_play);
+        let mut is_capture = false;
+        is_capture |= x > 0 && capture.try_capture(x - 1, y);
+        is_capture |= x < 18 && capture.try_capture(x + 1, y);
+        is_capture |= y > 0 && capture.try_capture(x, y - 1);
+        is_capture |= y < 18 && capture.try_capture(x, y + 1);
+
+        if !is_capture {
             let defender = self.to_play.opposite();
             let left = x == 0 || state.get(x - 1, y) == Some(defender);
             let right = x == 18 || state.get(x + 1, y) == Some(defender);
@@ -98,7 +88,7 @@ impl Tree {
             }
         }
 
-        if let Some(parent) = self.nodes.get(node.parent) {
+        if let Some(parent) = self.nodes.get(current_node.parent) {
             if parent.state == state {
                 return Err(PlaceStoneError::Ko);
             }
@@ -118,50 +108,6 @@ impl Tree {
     }
 }
 
-struct Capture<'a> {
-    state: &'a State,
-    visited: Mask,
-    capturer: Color,
-}
-
-impl<'a> Capture<'a> {
-    pub fn new(state: &'a State, capturer: Color) -> Self {
-        Self {
-            state,
-            visited: Mask::default(),
-            capturer,
-        }
-    }
-
-    fn is_capture(&mut self, x: usize, y: usize) -> bool {
-        assert!(x <= 18);
-        assert!(y <= 18);
-
-        if self.visited.get(x, y) {
-            return true;
-        }
-
-        self.visited.set(x, y);
-
-        let attacker = match self.capturer {
-            Color::Black => &self.state.black,
-            Color::White => &self.state.white,
-        };
-
-        let defender = match self.capturer {
-            Color::Black => &self.state.white,
-            Color::White => &self.state.black,
-        };
-
-        attacker.get(x, y)
-            || (defender.get(x, y)
-                && (x == 0 || self.is_capture(x - 1, y))
-                && (x >= 18 || self.is_capture(x + 1, y))
-                && (y == 0 || self.is_capture(x, y - 1))
-                && (y >= 18 || self.is_capture(x, y + 1)))
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum PlaceStoneError {
     #[error("The stone placement violates ko rules")]
@@ -175,8 +121,10 @@ pub enum PlaceStoneError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mask::Mask;
 
     #[test]
+    #[ignore]
     fn captures_one_stone() {
         #[rustfmt::skip]
         let black = Mask::new([

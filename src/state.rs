@@ -38,36 +38,6 @@ impl State {
             None
         }
     }
-
-    fn mask_group(&self, x: usize, y: usize, color: Color) -> Mask {
-        let mut mask = Mask::EMPTY;
-        let stencil = match color {
-            Color::Black => &self.black,
-            Color::White => &self.white,
-        };
-        mask.set(x, y);
-        loop {
-            let next = mask.expand(stencil);
-            if next == mask {
-                break;
-            }
-            mask = next;
-        }
-        mask
-    }
-
-    pub fn remove_group(&mut self, x: usize, y: usize) {
-        if let Some(color) = self.get(x, y) {
-            let mask = self.mask_group(x, y, color);
-            let target = match color {
-                Color::Black => &mut self.black,
-                Color::White => &mut self.white,
-            };
-            for (row, &mask) in target.rows_mut().zip(mask.rows()) {
-                *row &= !mask;
-            }
-        }
-    }
 }
 
 impl Debug for State {
@@ -85,35 +55,5 @@ impl Debug for State {
             write!(f, "\n")?;
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn removes_group() {
-        #[rustfmt::skip]
-        let black = Mask::new([
-            0b01000010,
-            0b11100111,
-            0b01010010,
-            0b00111000,
-            0b00010000,
-        ]);
-        let mut state = State::new(black, Mask::EMPTY);
-        state.remove_group(6, 0);
-
-        #[rustfmt::skip]
-        let expected = Mask::new([
-            0b00000010,
-            0b00000111,
-            0b00010010,
-            0b00111000,
-            0b00010000,
-        ]);
-
-        assert_eq!(state.black, expected);
     }
 }

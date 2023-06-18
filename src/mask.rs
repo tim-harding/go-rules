@@ -1,6 +1,6 @@
 use std::{
     fmt::{self, Debug, Formatter},
-    ops::{Deref, DerefMut, Index, IndexMut},
+    ops::{Deref, DerefMut, Index, IndexMut, Not},
 };
 
 use crate::mask_row::MaskRow;
@@ -42,14 +42,44 @@ impl Mask {
         self[y].unset(x)
     }
 
-    pub fn expand(&self, stencil: &Mask) -> Self {
-        let mut out = Mask::EMPTY;
-        out[0] = (self[1] | self[0].expand()) & stencil[0];
+    pub fn expand_once(&mut self, stencil: &Mask) {
+        let mut prev = self[0];
+        self[0] = (self[1] | self[0].expand()) & stencil[0];
         for i in 1..=17 {
-            out[i] = (self[i - 1] | self[i].expand() | self[i + 1]) & stencil[i];
+            let temp = self[i];
+            self[i] = (prev | self[i].expand() | self[i + 1]) & stencil[i];
+            prev = temp;
         }
-        out[18] = (self[17] | self[18].expand()) & stencil[18];
-        out
+        self[18] = (prev | self[18].expand()) & stencil[18];
+    }
+
+    pub fn expand_all(&mut self, stencil: &Mask) {
+        loop {
+            let prev = *self;
+            self.expand_once(stencil);
+            if self == &prev {
+                break;
+            }
+        }
+    }
+
+    pub fn flood(&self, x: usize, y: usize) -> Self {
+        let mut mask = Mask::EMPTY;
+        mask.set(x, y);
+        mask.expand_all(self);
+        mask
+    }
+
+    pub fn has_a_liberty(&self, opponent: &Mask) -> bool {
+        if *((self[1] | self[0].expand()) & !self[0] & !opponent[0]) > 0 {
+            return true;
+        }
+        for i in 1..=17 {
+            if *((self[i-1] | self[i].expand() | self[i + 1]) & !self[i] & !opponent[i]) > 0 {
+                return true;
+            }
+        }
+        *((self[17] | self[18].expand()) & !self[18] & !opponent[18]) > 0
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &MaskRow> {
@@ -72,6 +102,34 @@ impl Deref for Mask {
 impl DerefMut for Mask {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl Not for Mask {
+    type Output = Mask;
+
+    fn not(self) -> Self::Output {
+        Self([
+            !self[0],
+            !self[1],
+            !self[2],
+            !self[3],
+            !self[4],
+            !self[5],
+            !self[6],
+            !self[7],
+            !self[8],
+            !self[9],
+            !self[10],
+            !self[11],
+            !self[12],
+            !self[13],
+            !self[14],
+            !self[15],
+            !self[16],
+            !self[17],
+            !self[18],
+        ])
     }
 }
 
@@ -151,10 +209,10 @@ mod tests {
             0b010,
             0b000,
         ]);
-        actual = actual.expand(&Mask::FILLED);
+        actual.expand_once(&Mask::FILLED);
 
         #[rustfmt::skip]
-        let mut expected = Mask::new([
+        let expected = Mask::new([
             0b010,
             0b111,
             0b010,
@@ -171,11 +229,11 @@ mod tests {
             0b000,
             0b000,
         ]);
-        actual = actual.expand(&Mask::FILLED);
-        actual = actual.expand(&Mask::FILLED);
+        actual.expand_once(&Mask::FILLED);
+        actual.expand_once(&Mask::FILLED);
 
         #[rustfmt::skip]
-        let mut expected = Mask::new([
+        let expected = Mask::new([
             0b111,
             0b011,
             0b001,
@@ -192,10 +250,10 @@ mod tests {
             0b01110,
             0b01010,
         ]);
-        actual = actual.expand(&Mask::FILLED);
+        actual.expand_once(&Mask::FILLED);
 
         #[rustfmt::skip]
-        let mut expected = Mask::new([
+        let expected = Mask::new([
             0b01110,
             0b11111,
             0b11111,
@@ -216,7 +274,7 @@ mod tests {
         ]);
 
         #[rustfmt::skip]
-        let mut stencil = Mask::new([
+        let stencil = Mask::new([
             0b00000,
             0b01110,
             0b01110,
@@ -224,23 +282,23 @@ mod tests {
         ]);
 
         #[rustfmt::skip]
-        let mut expected = Mask::new([
+        let expected = Mask::new([
             0b00000,
             0b01100,
             0b01000,
             0b00000,
         ]);
-        actual = actual.expand(&stencil);
+        actual.expand_once(&stencil);
         assert_eq!(actual, expected);
 
         #[rustfmt::skip]
-        let mut expected = Mask::new([
+        let expected = Mask::new([
             0b00000,
             0b01110,
             0b01100,
             0b01000,
         ]);
-        actual = actual.expand(&stencil);
+        actual.expand_once(&stencil);
         assert_eq!(actual, expected);
     }
 }
