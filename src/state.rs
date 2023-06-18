@@ -72,12 +72,13 @@ impl State {
 
 impl Debug for State {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\n")?;
         for y in 0..19 {
             for x in 0..19 {
                 let c = match self.get(x, y) {
                     Some(Color::Black) => 'b',
                     Some(Color::White) => 'w',
-                    None => ' ',
+                    None => '.',
                 };
                 write!(f, "{c}")?;
             }
