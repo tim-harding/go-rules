@@ -29,16 +29,25 @@ pub enum PlacementMode {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tree {
-    states: Vec<Node>,
+    nodes: Vec<Node>,
     current: usize,
     to_play: Color,
-    placement_mode: PlacementMode,
+    pub placement_mode: PlacementMode,
 }
 
 impl Tree {
+    pub fn new(state: State, to_play: Color) -> Self {
+        Self {
+            nodes: vec![Node::new(state, usize::MAX)],
+            current: 0,
+            to_play,
+            placement_mode: PlacementMode::Toggle,
+        }
+    }
+
     pub fn empty() -> Self {
         Self {
-            states: vec![Node::new(State::default(), usize::MAX)],
+            nodes: vec![Node::new(State::default(), usize::MAX)],
             current: 0,
             to_play: Color::Black,
             placement_mode: PlacementMode::Toggle,
@@ -49,7 +58,7 @@ impl Tree {
         assert!(x <= 18);
         assert!(y <= 18);
 
-        let node = self.states[self.current];
+        let node = self.nodes[self.current];
         let mut state = node.state.clone();
 
         if state.black.get(x, y) || state.white.get(x, y) {
@@ -89,14 +98,14 @@ impl Tree {
             }
         }
 
-        if let Some(parent) = self.states.get(node.parent) {
+        if let Some(parent) = self.nodes.get(node.parent) {
             if parent.state == state {
                 return Err(PlaceStoneError::Ko);
             }
         }
 
-        self.states.push(Node::new(state, self.current));
-        self.current = self.states.len() - 1;
+        self.nodes.push(Node::new(state, self.current));
+        self.current = self.nodes.len() - 1;
         if self.placement_mode == PlacementMode::Toggle {
             self.to_play = self.to_play.opposite();
         }
@@ -104,8 +113,8 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_placement_mode(&mut self, mode: PlacementMode) {
-        self.placement_mode = mode;
+    pub fn current(&self) -> &State {
+        &self.nodes[self.current].state
     }
 }
 
@@ -161,4 +170,41 @@ pub enum PlaceStoneError {
     SelfCapture,
     #[error("Attempting to place a stone in an occupied intersection")]
     AlreadyExists,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn captures_one_stone() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b000,
+            0b101,
+            0b010,
+        ]);
+
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b000,
+            0b010,
+            0b000,
+        ]);
+
+        let state = State::new(black, white);
+        let mut tree = Tree::new(state, Color::Black);
+        tree.place_stone(2, 0)
+            .expect("Should be able to capture one stone");
+
+        #[rustfmt::skip]
+        let expected_black = Mask::new([
+            0b010,
+            0b101,
+            0b010,
+        ]);
+        let expected = State::new(expected_black, Mask::EMPTY);
+
+        assert_eq!(tree.current(), &expected);
+    }
 }

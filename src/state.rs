@@ -1,6 +1,5 @@
-use std::fmt::{self, Debug, Formatter};
-
 use crate::{color::Color, mask::Mask};
+use std::fmt::{self, Debug, Formatter};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct State {
@@ -40,7 +39,7 @@ impl State {
         }
     }
 
-    pub fn mask_group(&self, x: usize, y: usize, color: Color) -> Mask {
+    fn mask_group(&self, x: usize, y: usize, color: Color) -> Mask {
         let mut mask = Mask::EMPTY;
         let stencil = match color {
             Color::Black => &self.black,
