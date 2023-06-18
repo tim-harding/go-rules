@@ -130,4 +130,17 @@ mod tests {
         let mut tree = Tree::new(state, Color::White);
         assert_eq!(tree.place_stone(0, 0), Err(PlaceStoneError::AlreadyExists));
     }
+
+    #[test]
+    fn self_capture_error() {
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b010,
+            0b101,
+            0b010,
+        ]);
+        let state = State::new(Mask::EMPTY, white);
+        let mut tree = Tree::new(state, Color::Black);
+        assert_eq!(tree.place_stone(1, 1), Err(PlaceStoneError::SelfCapture));
+    }
 }
