@@ -108,7 +108,7 @@ impl Tree {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum PlaceStoneError {
     #[error("The stone placement violates ko rules")]
     Ko,
@@ -116,4 +116,18 @@ pub enum PlaceStoneError {
     SelfCapture,
     #[error("Attempting to place a stone in an occupied intersection")]
     AlreadyExists,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::mask::Mask;
+
+    use super::*;
+
+    #[test]
+    fn already_exists_error() {
+        let state = State::new(Mask::new([0b1]), Mask::EMPTY);
+        let mut tree = Tree::new(state, Color::White);
+        assert_eq!(tree.place_stone(0, 0), Err(PlaceStoneError::AlreadyExists));
+    }
 }
