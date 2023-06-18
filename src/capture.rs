@@ -91,4 +91,31 @@ mod tests {
         assert_eq!(state.black, black);
         assert_eq!(state.white, Mask::EMPTY);
     }
+
+    #[test]
+    fn dont_capture_group_with_liberties() {
+        #[rustfmt::skip]
+        let black = Mask::new([
+            0b01010,
+            0b10001,
+            0b10001,
+            0b10001,
+            0b01110,
+        ]);
+
+        #[rustfmt::skip]
+        let white = Mask::new([
+            0b00000,
+            0b01110,
+            0b01110,
+            0b01110,
+            0b00000,
+        ]);
+
+        let mut state = State::new(black, white);
+        let mut capture = Capture::new(&mut state, Color::Black);
+        assert!(!capture.try_capture(1, 1));
+        assert_eq!(state.black, black);
+        assert_eq!(state.white, white);
+    }
 }
