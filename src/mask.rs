@@ -1,8 +1,8 @@
 use std::{
     fmt::Debug,
     ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, Deref, DerefMut, Not, Shl, ShlAssign, Shr,
-        ShrAssign,
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, Deref, DerefMut, Index, IndexMut, Not, Shl,
+        ShlAssign, Shr, ShrAssign,
     },
 };
 
@@ -32,24 +32,13 @@ impl Mask {
         self.0[y].unset(x)
     }
 
-    pub fn row(&self, y: usize) -> &MaskRow {
-        assert!(y <= 18);
-        &self.0[y]
-    }
-
-    pub fn row_mut(&mut self, y: usize) -> &mut MaskRow {
-        assert!(y <= 18);
-        &mut self.0[y]
-    }
-
     pub fn expand(&self, stencil: &Mask) -> Self {
         let mut out = Mask::new();
-        out.0[0] |= self.0[1] | self.0[0] << 1 | self.0[0] >> 1 & stencil.0[0];
+        out[0] |= self[1] | self[0] << 1 | self[0] >> 1 & stencil[0];
         for i in 1..=17 {
-            out.0[i] |=
-                self.0[i - 1] | self.0[i] << 1 | self.0[i] >> 1 | self.0[i + 1] & stencil.0[i];
+            out[i] |= self[i - 1] | self[i] << 1 | self[i] >> 1 | self[i + 1] & stencil[i];
         }
-        out.0[18] |= self.0[17] | self.0[18] << 1 | self.0[18] >> 1 & stencil.0[18];
+        out[18] |= self[17] | self[18] << 1 | self[18] >> 1 & stencil[18];
         out
     }
 
@@ -59,6 +48,34 @@ impl Mask {
 
     pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut MaskRow> {
         self.0.iter_mut()
+    }
+}
+
+impl Deref for Mask {
+    type Target = [MaskRow; 19];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Mask {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Index<usize> for Mask {
+    type Output = MaskRow;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl IndexMut<usize> for Mask {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
     }
 }
 
